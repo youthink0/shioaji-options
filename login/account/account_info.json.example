@@ -1,0 +1,9 @@
+{
+  "person_id": "A123456789",
+  "passwd": "passwd",
+  
+  "ca_path": "C:/sinopac/",
+  "ca_name": "Sinopac.pfx",
+  "ca_passwd": "A123456789"
+  
+}
