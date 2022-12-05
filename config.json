@@ -1,3 +1,7 @@
 {
-    "get_strike_time": "21:05:00"
+    "get_strike_time": "21:03:00",
+    "simulation_mode": "True",
+    "simulation_optionright": "P",
+    "simulation_quantity": 5,
+    "simulation_action": "Buy"
 }

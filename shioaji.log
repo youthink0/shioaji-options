@@ -1,0 +1,1 @@
+[E 2022-12-05 17:56:38,784 c:\Users\ltming\Shioaji-Option\shioaji-option\lib\site-packages\shioaji\utils.py:46:raise_resp_error] {'status': {'status_code': 400}, 'response': {'token': '', 'accounts': [], 'detail': 'Incorrect userid or password', 'ip_address': '140.114.77.206', 'client_name': '', 'contract_download': False, 'web_token': ''}}

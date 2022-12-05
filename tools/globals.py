@@ -5,16 +5,21 @@
 def initialize():
     ### config setting ###
     global get_strike_time
+    global simulation_mode, simulation_optionright, simulation_quantity, simulation_action
 
     get_strike_time = None
+    simulation_mode = simulation_optionright = simulation_quantity = simulation_action = None
 
     ### interior setting ###
     global api
     global lastcontractprice, txo_weekly_dict
     global at_the_money_code, at_the_money 
+    global positions, contract
     
     api = None
     lastcontractprice={} #最新的各檔報價資訊
     txo_weekly_dict={} #key為每檔之code， value則為該檔之call put資訊，
     at_the_money_code = "" #價平code
     at_the_money = 0 #價平和
+    positions = [] #倉位
+    contract = None
