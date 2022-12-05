@@ -4,9 +4,11 @@
 
 def initialize():
     ### config setting ###
-    global get_strike_time, simulation_mode
+    global get_strike_time
+    global simulation_mode, simulation_optionright, simulation_quantity, simulation_action
 
-    get_strike_time = simulation_mode = None
+    get_strike_time = None
+    simulation_mode = simulation_optionright = simulation_quantity = simulation_action = None
 
     ### interior setting ###
     global api

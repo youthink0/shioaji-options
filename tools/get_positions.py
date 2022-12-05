@@ -64,7 +64,7 @@ def fill_positions(deal):
     try:
         if(deal['optionright'] == 'C'):
             optionright = 1
-        elif(deal['optionright'] == 'S'):
+        elif(deal['optionright'] == 'P'):
             optionright = -1
         else:
             raise ValueError('The optionright of this deal is neither "Call" nor "Put".')
