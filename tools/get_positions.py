@@ -7,6 +7,7 @@ import shioaji as sj
 
 import tools.globals as globals
 import tools.message_log as message_log
+import tools.contract as contract
 
 # %%
 def place_cb(stat, msg):
@@ -167,7 +168,7 @@ def place_order(quantity, option_code, cp = 'C', action = sj.constant.Action.Buy
         optionright = sj.constant.OptionRight.Put
     price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
 
-    globals.contract = globals.api.Contracts.Options[option_code]
+    globals.contract = contract.fill_contract(option_code)
     
     send_test_msg(
             int(price) ,
