@@ -78,10 +78,10 @@ def subscribe_cover_code(cover_call_code, cover_put_code):
         """
         Quoting subscribe function. It is called every tick(theoretically)
         """
-        print("ask_price: ", bidask['ask_price'], "bid_price: ", bidask['bid_price'])
+        #print("ask_price: ", bidask['ask_price'], "bid_price: ", bidask['bid_price'])
 
         # 取第三檔掛單價格，是為了避免夜盤時價差太大可能造成的風險
         globals.third_best_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
-        globals.third_best_sell_price = bidask['bid_price'][2] # 第三檔之最佳買賣價
+        globals.third_best_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
 
         time.sleep(5)

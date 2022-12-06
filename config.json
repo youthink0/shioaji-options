@@ -1,11 +1,12 @@
 {
-    "get_simulation_time": "17:55:00",
-    "simulation_mode": "true",
+    "get_simulation_time": "19:03:10",
+    "simulation_mode": "false",
     "simulation_optionright": "P",
     "simulation_quantity": 5,
     "simulation_action": "Buy",
 
     "get_cover_time": "18:11:00",
+    "cover_mode": "true",
     "cover_put_strike": 15000,
     "cover_call_strike": 15000,
     "cover_quantity": 1

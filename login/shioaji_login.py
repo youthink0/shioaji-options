@@ -21,7 +21,7 @@ def login():
     ca_path = ca_path + ca_name
     #ca_path = os.path.abspath(ca_path)
 
-    api = sj.Shioaji(simulation=False) 
+    api = sj.Shioaji(simulation=True) 
     
     api_login = api.login(
         person_id = account_data['person_id'],
