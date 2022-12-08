@@ -109,7 +109,7 @@ def get_tse_bound(upper,bottom,txname):
 # %%
 def get_snap_options():
     """
-    Get all snap options.
+    Get 當時所有options的snapshot資訊.
     並assign到相應之global變數
     
     :global param: lastcontractprice

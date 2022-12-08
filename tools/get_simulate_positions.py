@@ -7,7 +7,7 @@ import shioaji as sj
 
 import tools.globals as globals
 import tools.message_log as message_log
-import tools.contract as contract
+import tools.get_snap_options as snap
 
 # %%
 def place_cb(stat, msg):
@@ -143,9 +143,9 @@ def send_test_msg(
     place_cb(stat, msg)
 
 # %%
-def place_order(quantity, option_code, cp = 'C', action = sj.constant.Action.Buy):
+def place_simulate_order(quantity, option_code, cp = 'C', action = sj.constant.Action.Buy):
     """
-    送出下單
+    依照JSON檔支模擬下單參數 送出立即成交之模擬單
     assign globlas.contract
     
     :param: quantity (int)
@@ -167,8 +167,6 @@ def place_order(quantity, option_code, cp = 'C', action = sj.constant.Action.Buy
     else:
         optionright = sj.constant.OptionRight.Put
     price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
-
-    globals.contract = contract.fill_contract(option_code)
     
     send_test_msg(
             int(price) ,
@@ -180,8 +178,5 @@ def place_order(quantity, option_code, cp = 'C', action = sj.constant.Action.Buy
             stat= sj.constant.OrderState.FDeal,
             security_type= 'OPT'
     )
-
 # stat為FOrder 已經送出委託
 # stat為FDeal 已經完全成交或部分成交
-
-
