@@ -46,6 +46,7 @@ def fill_positions(deal):
     
     price = int(deal['price'])
     quantity = int(deal['quantity'])
+    code = deal['code']
     try:
         if(deal['action'] == 'Buy'):
             action = 1
@@ -90,7 +91,7 @@ def fill_positions(deal):
             del globals.positions[0]
 
     print('***')
-    log_msg = f'A position with type={action_text}, quantity={ori_quantity}, price={price} has been recorded!\n'
+    log_msg = f'A position with code={code}, type={action_text}, quantity={ori_quantity}, price={price} has been recorded!\n'
     print(log_msg)
     message_log.write_log(log_msg)
     print('***\n')
@@ -109,7 +110,7 @@ def fill_positions(deal):
         #print("current positions: ", globals.positions[0])
         #[action, int(quantity), int(price), int(price), False]
         print('***')
-        log_msg = f'A position with type={action_text}, quantity={quantity}, price={price} has been added to the track list!\n'
+        log_msg = f'A position with code={code}, type={action_text}, quantity={quantity}, price={price} has been added to the track list!\n'
         print(log_msg)
         message_log.write_log(log_msg)
         print('***\n')

@@ -14,6 +14,7 @@ importlib.reload(shioaji_login)
 import tools.globals as globals
 import tools.get_snap_options as snap
 import tools.contract as contract
+import tools.get_simulate_positions as positions
 import tools.message_log as message_log
 
 # %%
@@ -73,6 +74,20 @@ def dynamic_price_adjustment(trade, price):
 
         time.sleep(15)
 
+def update_at_the_money_price(cp, askbid):
+    """
+    此func是為了更新globals.txo_weekly_dict
+    
+    :param: cp (str)
+    :param: askbid (str)
+    :global param: txo_weekly_dict
+    :global param: at_the_money_code
+
+    return: none
+    """
+    snap.get_snap_options() 
+    price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
+    return price
 
 # %%
 def place_simulate_cover_order(quantity, option_code, cp, action):
@@ -100,10 +115,9 @@ def place_simulate_cover_order(quantity, option_code, cp, action):
     else:
         optionright = sj.constant.OptionRight.Put
 
-    snap.get_snap_options() # 呼叫此func是為了更新globals.txo_weekly_dict
-    price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
+    price = update_at_the_money_price(cp, askbid)
     
-    send_test_msg(
+    positions.send_test_msg(
             int(price) ,
             quantity,
             action,
@@ -164,7 +178,12 @@ def cover_controller():
                 cover_action = sj.constant.Action.Sell
             elif(p[0] == -1):
                 cover_action = sj.constant.Action.Buy
-            place_simulate_cover_order(p[1], option_code, p[3], cover_action) #p[1]: 口數， p[3]: optionright
+
+            if(p[3] == 1):
+                cp = 'C'
+            elif(p[3] == -1):
+                cp = 'P'
+            place_simulate_cover_order(p[1], option_code,cp, cover_action) #p[1]: 口數， p[3]: optionright
 
     time.sleep(1)
 
