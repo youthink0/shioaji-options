@@ -7,7 +7,6 @@ import shioaji as sj
 
 import tools.globals as globals
 import tools.message_log as message_log
-import tools.get_snap_options as snap
 
 # %%
 def place_cb(stat, msg):

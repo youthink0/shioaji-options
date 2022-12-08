@@ -14,6 +14,7 @@ importlib.reload(shioaji_login)
 import tools.globals as globals
 import tools.get_snap_options as snap
 import tools.contract as contract
+import tools.message_log as message_log
 
 # %%
 def get_cover_code():
@@ -45,51 +46,32 @@ def judge_symbol(code, price):
         month_to_code = '0MNOPQRSTUVWX'
 
 # %%
-def subscribe_cover_code(cover_call_code, cover_put_code):
-    """
-    訂閱平倉call, put之bidask，即時得到第三跳的報價
-
-    :global param: globals.cover_call_contract
-    :global param: globals.cover_put_contract
-    :global param: third_best_buy_price (int)
-    :global param: third_best_sell_price (int)
-
-    :return: None
-    """
-
-    globals.cover_call_contract = contract.fill_contract(cover_call_code)
-    globals.api.quote.subscribe(
-        globals.cover_call_contract,
-        quote_type = sj.constant.QuoteType.BidAsk, # or 'bidask'
-        version = sj.constant.QuoteVersion.v1, # or 'v1'
-    )
-
-    """
-    globals.cover_put_contract = contract.fill_contract(cover_put_code)
-    globals.api.quote.subscribe(
-        globals.cover_put_contract,
-        quote_type = sj.constant.QuoteType.BidAsk, # or 'bidask'
-        version = sj.constant.QuoteVersion.v1, # or 'v1'
-    )
-    """
-
-    @globals.api.on_bidask_fop_v1()
-    def quote_callback(exchange:sj.Exchange, bidask:BidAskFOPv1):
-        #always avoid making calulations inside the callback function.
-        """
-        Quoting subscribe function. It is called every tick(theoretically)
-        """
-        #print("ask_price: ", bidask['ask_price'], "bid_price: ", bidask['bid_price'])
-
-        # 取第三檔掛單價格，是為了避免夜盤時價差太大可能造成的風險
-        globals.third_best_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
-        globals.third_best_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
-
-        time.sleep(5)
-
-# %%
 def dynamic_price_adjustment(trade, price):
-    return
+    """
+    實單平倉之買進價格為動態調整 每隔15秒會偵測一次最新買價 永遠掛在最佳買價上
+    
+    :param: trade (<class 'shioaji.order.Trade'>)
+    :param: price (int)
+    :global param: api
+    :global param: third_best_buy_price
+
+    return: none
+    """
+    while(True):
+        if price != globals.third_best_buy_price:
+            price = globals.third_best_buy_price
+            globals.api.update_status(globals.api.futopt_account)
+            globals.api.update_order(trade=trade, price=price)
+            globals.api.update_status(globals.api.futopt_account)
+            print(trade.status.status.value)
+
+            print('***')
+            log_msg = f'An cover order price is already update to {price}!\n'
+            print(log_msg)
+            message_log.write_log(log_msg)
+            print('***\n')
+
+        time.sleep(15)
 
 
 # %%
@@ -185,3 +167,46 @@ def cover_controller():
             place_simulate_cover_order(p[1], option_code, p[3], cover_action) #p[1]: 口數， p[3]: optionright
 
     time.sleep(1)
+
+# %%
+def subscribe_cover_code(cover_call_code, cover_put_code):
+    """
+    訂閱平倉call, put之bidask，即時得到第三跳的報價
+
+    :global param: globals.cover_call_contract
+    :global param: globals.cover_put_contract
+    :global param: third_best_buy_price (int)
+    :global param: third_best_sell_price (int)
+
+    :return: None
+    """
+
+    globals.cover_call_contract = contract.fill_contract(cover_call_code)
+    globals.api.quote.subscribe(
+        globals.cover_call_contract,
+        quote_type = sj.constant.QuoteType.BidAsk, # or 'bidask'
+        version = sj.constant.QuoteVersion.v1, # or 'v1'
+    )
+
+    """
+    globals.cover_put_contract = contract.fill_contract(cover_put_code)
+    globals.api.quote.subscribe(
+        globals.cover_put_contract,
+        quote_type = sj.constant.QuoteType.BidAsk, # or 'bidask'
+        version = sj.constant.QuoteVersion.v1, # or 'v1'
+    )
+    """
+
+    @globals.api.on_bidask_fop_v1()
+    def quote_callback(exchange:sj.Exchange, bidask:BidAskFOPv1):
+        #always avoid making calulations inside the callback function.
+        """
+        Quoting subscribe function. It is called every tick(theoretically)
+        """
+        #print("ask_price: ", bidask['ask_price'], "bid_price: ", bidask['bid_price'])
+
+        # 取第三檔掛單價格，是為了避免夜盤時價差太大可能造成的風險
+        globals.third_best_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
+        globals.third_best_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
+
+        time.sleep(5)
