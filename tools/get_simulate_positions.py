@@ -2,6 +2,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import json
+import time
+import pickle
 
 import shioaji as sj
 
@@ -94,17 +96,18 @@ def fill_positions(deal):
     log_msg = f'A position with code={code}, type={action_text}, quantity={ori_quantity}, price={price} has been recorded!\n'
     print(log_msg)
     message_log.write_log(log_msg)
-    print('***\n')
+    print('***')
     
     if (quantity > 0):
         
         # Ensure the data type is int
+        position = [action, int(quantity), int(price), int(optionright), code, False]
         
         if(action == 1):
-            globals.positions.append([action, int(quantity), int(price), int(optionright), False])
+            globals.positions.append(position)
             globals.positions = sorted(globals.positions, key=lambda p: p[2], reverse=False)
         else:
-            globals.positions.append([action, int(quantity), int(price), int(optionright), False])
+            globals.positions.append(position)
             globals.positions = sorted(globals.positions, key=lambda p: p[2], reverse=True)
         
         #print("current positions: ", globals.positions[0])
@@ -113,7 +116,9 @@ def fill_positions(deal):
         log_msg = f'A position with code={code}, type={action_text}, quantity={quantity}, price={price} has been added to the track list!\n'
         print(log_msg)
         message_log.write_log(log_msg)
-        print('***\n')
+        print('***')
+
+    store_position(globals.position)
 
 # %%
 def send_test_msg(
@@ -180,3 +185,30 @@ def place_simulate_order(quantity, option_code, cp = 'C', action = sj.constant.A
     )
 # stat為FOrder 已經送出委託
 # stat為FDeal 已經完全成交或部分成交
+
+# %%
+def read_position():
+    """
+    讀取外部存取之上次程式模擬倉位
+
+    return: stored_position (list)
+    """
+    with open('positions.pickle', 'rb') as f:
+        try:
+            stored_position = pickle.load(f)
+        except EOFError:
+            stored_position = []
+    time.sleep(1)
+    
+    return stored_position
+
+# %%
+def store_position(position):
+    """
+    存取目前模擬倉位至外部檔案
+
+    return: None
+    """
+    with open('positions.pickle', 'wb') as f:
+        pickle.dump(position, f)   
+    time.sleep(2)

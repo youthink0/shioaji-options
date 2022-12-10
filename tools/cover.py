@@ -47,7 +47,50 @@ def judge_symbol(code, price):
         month_to_code = '0MNOPQRSTUVWX'
 
 # %%
-def dynamic_price_adjustment(trade, price):
+def get_trade(cp):
+    """
+    得到json檔中call put各自的trade資訊
+    
+    :param: cp (str)
+    :global param: api
+    :global param: cover_call_contract
+    :global param: cover_put_contract
+    :global param: third_best_buy_price
+
+    return: none
+    """
+    if cp == 'C':
+        contract = globals.cover_call_contract
+        optionright = sj.constant.OptionRight.Call
+        price = globals.third_best_buy_price
+    elif cp == 'P':
+        contract = globals.cover_put_contract
+        optionright = sj.constant.OptionRight.Put
+        price = globals.third_best_buy_price
+    else:
+        return None
+    order = globals.api.Order(
+        action=sj.constant.Action.Buy,
+        price=price,
+        quantity=globals.cover_quantity, #口數
+        price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
+        order_type=sj.constant.FuturesOrderType.ROD,
+        octype=sj.constant.FuturesOCType.Cover, #倉別，收盤時平倉
+        OptionRight=optionright, #選擇權類型
+        account=globals.api.futopt_account #下單帳戶指定期貨帳戶
+    )
+
+    trade = globals.api.place_order(contract, order)
+    print('***')
+    log_msg = f'An cover order {trade} is already sent!\n'
+    print(log_msg)
+    message_log.write_log(log_msg)
+    print('***\n')
+
+    return trade, price
+
+# %%
+def dynamic_price_adjustment(call_trade, call_price, put_trade, put_price):
     """
     實單平倉之買進價格為動態調整 每隔15秒會偵測一次最新買價 永遠掛在最佳買價上
     
@@ -59,35 +102,33 @@ def dynamic_price_adjustment(trade, price):
     return: none
     """
     while(True):
-        if price != globals.third_best_buy_price:
-            price = globals.third_best_buy_price
+        if call_price != globals.third_best_buy_price:
+            call_price = globals.third_best_buy_price
             globals.api.update_status(globals.api.futopt_account)
-            globals.api.update_order(trade=trade, price=price)
+            globals.api.update_order(trade=call_trade, price=call_price)
             globals.api.update_status(globals.api.futopt_account)
-            print(trade.status.status.value)
+            print(call_trade.status.status.value)
 
             print('***')
-            log_msg = f'An cover order price is already update to {price}!\n'
+            log_msg = f'An cover call order price is already update to {call_price}!\n'
             print(log_msg)
             message_log.write_log(log_msg)
-            print('***\n')
+            print('***')
+
+        if put_price != globals.third_best_buy_price:
+            put_price = globals.third_best_buy_price
+            globals.api.update_status(globals.api.futopt_account)
+            globals.api.update_order(trade=put_trade, price=put_price)
+            globals.api.update_status(globals.api.futopt_account)
+            print(put_trade.status.status.value)
+
+            print('***')
+            log_msg = f'An cover put order price is already update to {put_price}!\n'
+            print(log_msg)
+            message_log.write_log(log_msg)
+            print('***')
 
         time.sleep(15)
-
-def update_at_the_money_price(cp, askbid):
-    """
-    此func是為了更新globals.txo_weekly_dict
-    
-    :param: cp (str)
-    :param: askbid (str)
-    :global param: txo_weekly_dict
-    :global param: at_the_money_code
-
-    return: none
-    """
-    snap.get_snap_options() 
-    price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
-    return price
 
 # %%
 def place_simulate_cover_order(quantity, option_code, cp, action):
@@ -115,7 +156,7 @@ def place_simulate_cover_order(quantity, option_code, cp, action):
     else:
         optionright = sj.constant.OptionRight.Put
 
-    price = update_at_the_money_price(cp, askbid)
+    price = snap.update_at_the_money_price(cp, askbid)
     
     positions.send_test_msg(
             int(price) ,
@@ -147,32 +188,12 @@ def cover_controller():
     # Offset.CLOSE: A closing offset (CO) order is a limit order that is executed at market close but can be placed anytime during the trading day. 
     if globals.cover_mode:
         ### 下實單平倉 ###
-        contract = globals.cover_call_contract #選擇權Contract
-        optionright = sj.constant.OptionRight.Call
-        price = globals.third_best_buy_price #價格
-        order = globals.api.Order(
-            action=sj.constant.Action.Buy,
-            price=price,
-            quantity=globals.cover_quantity, #口數
-            price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
-            order_type=sj.constant.FuturesOrderType.ROD,
-            octype=sj.constant.FuturesOCType.Cover, #倉別，收盤時平倉
-            OptionRight=optionright, #選擇權類型
-            account=globals.api.futopt_account #下單帳戶指定期貨帳戶
-        )
+        call_trade, call_price = get_trade('C')
+        put_trade, put_price = get_trade('P')
 
-        trade = globals.api.place_order(contract, order)
-        print('***')
-        log_msg = f'An cover order {trade} is already sent!\n'
-        print(log_msg)
-        message_log.write_log(log_msg)
-        print('***\n')
-
-        dynamic_price_adjustment(trade, price)
-    
+        dynamic_price_adjustment(call_trade, call_price, put_trade, put_price)
     if globals.simulation_mode:
         ### 下模擬單平倉 ###
-        option_code = globals.at_the_money_code +  snap.get_option_code(globals.simulation_optionright)
         for p in globals.positions:
             if(p[0] == 1):
                 cover_action = sj.constant.Action.Sell
@@ -183,7 +204,7 @@ def cover_controller():
                 cp = 'C'
             elif(p[3] == -1):
                 cp = 'P'
-            place_simulate_cover_order(p[1], option_code,cp, cover_action) #p[1]: 口數， p[3]: optionright
+            place_simulate_cover_order(p[1], p[4], cp, cover_action) #p[1]: 口數， p[3]: optionright, p[4]: option_code
 
     time.sleep(1)
 
