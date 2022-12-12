@@ -208,11 +208,6 @@ def cover_controller():
     # Offset.CLOSE: A closing offset (CO) order is a limit order that is executed at market close but can be placed anytime during the trading day. 
     if globals.cover_mode:
         ### 下實單平倉 ###
-        
-        #call_trade, call_price = get_trade('C')
-        #print(call_trade, "price: ", call_price)
-        #put_trade, put_price = get_trade('P')
-
         dynamic_price_adjustment()
         
     if globals.simulation_mode:
