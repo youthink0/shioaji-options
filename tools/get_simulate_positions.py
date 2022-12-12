@@ -23,7 +23,7 @@ def place_cb(stat, msg):
         print('A deal has been detected.')
         print(f'Deal information: code:{msg["code"]}, action:{msg["action"]}, price:{msg["price"]}, quantity:{msg["quantity"]}, optionright:{msg["optionright"]}')
         print(f'Delivery month:{msg["delivery_month"]}, security type: {msg["security_type"]}')
-        message_log.write_log('\nstat: ' + stat + ' msg: ' + json.dumps(msg, ensure_ascii=False) )
+        message_log.write_log('stat: ' + stat + ' msg: ' + json.dumps(msg, ensure_ascii=False) + '\n' )
         fill_positions(msg)
 
 # %%
@@ -36,6 +36,7 @@ def fill_positions(deal):
     :return: None
     """
     
+    '''
     # First check if the type and month match the tracking future.
     if(
         deal['code'] != globals.contract['code'] or
@@ -45,6 +46,7 @@ def fill_positions(deal):
       ):
         print("This deal is not as same as the future currently tracking.")
         return
+    '''
     
     price = int(deal['price'])
     quantity = int(deal['quantity'])
@@ -81,7 +83,7 @@ def fill_positions(deal):
     
     # While there are still some positions and it is the oppsite of the deal:
     ori_quantity = quantity
-    while(globals.positions and globals.positions[0][0] == -action and quantity > 0):
+    while(globals.positions and globals.positions[0][0] == -action and globals.positions[0][3] == optionright and quantity > 0):
         
         if(globals.positions[0][1] > quantity):
             globals.positions[0][1] -= quantity
@@ -90,13 +92,14 @@ def fill_positions(deal):
             break
         else:
             quantity -= globals.positions[0][1]
-            del globals.positions[0]
 
-    print('***')
-    log_msg = f'A position with code={code}, type={action_text}, quantity={ori_quantity}, price={price} has been recorded!\n'
-    print(log_msg)
-    message_log.write_log(log_msg)
-    print('***')
+            print('***')
+            log_msg = f'A position with {globals.positions[0]} has been covered!\n'
+            print(log_msg)
+            message_log.write_log(log_msg)
+            print('***')
+            del globals.positions[0]
+            
     
     if (quantity > 0):
         
@@ -118,7 +121,8 @@ def fill_positions(deal):
         message_log.write_log(log_msg)
         print('***')
 
-    store_position(globals.position)
+    store_position(globals.positions)
+    
 
 # %%
 def send_test_msg(

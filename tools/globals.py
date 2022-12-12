@@ -19,7 +19,8 @@ def initialize():
     global lastcontractprice, txo_weekly_dict
     global at_the_money_code, at_the_money 
     global positions, contract
-    global third_best_buy_price, third_best_sell_price
+    global third_best_call_buy_price, third_best_call_sell_price
+    global third_best_put_buy_price, third_best_put_sell_price
     global cover_call_contract, cover_put_contract
     
     api = None
@@ -29,5 +30,6 @@ def initialize():
     at_the_money = 0 #價平和
     positions = [] #倉位
     contract = None #目前價平之指定CP資訊
-    third_best_buy_price = third_best_sell_price = None # 第三檔之最佳買賣價
+    third_best_call_buy_price = third_best_call_sell_price = None # call第三檔之最佳買賣價
+    third_best_put_buy_price = third_best_put_sell_price = None # put第三檔之最佳買賣價
     cover_call_contract = cover_put_contract = None #平倉call put之指定CP資訊

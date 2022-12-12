@@ -4,11 +4,11 @@
 import importlib
 import time
 import datetime
+import pandas as pd
 
 import shioaji as sj
 import login.shioaji_login as shioaji_login
 from shioaji import BidAskFOPv1
-# from shioaji.constant import Action, OptionRight, StockPriceType, FuturesOrderType, FuturesOCType #選擇權下單，多匯入一個OptionRight常數
 importlib.reload(shioaji_login)
 
 import tools.globals as globals
@@ -41,10 +41,30 @@ def get_cover_code():
     return cover_call_code, cover_put_code
 
 # %%
-def judge_symbol(code, price):
-    month_to_code = '0ABCDEFGHIJKL'
-    if cp=="P":
-        month_to_code = '0MNOPQRSTUVWX'
+def judge_symbol(code, bidask):
+    """
+    判斷目前訂閱發送之價格屬於call or put的實單合約
+    
+    
+    :param: cp (str)
+    :global param: api
+    :global param: cover_call_contract
+    :global param: cover_put_contract
+    :global param: third_best_buy_price
+
+    return: none
+    """
+    call_month_symbol = '0ABCDEFGHIJKL'
+    put_month_symbol = '0MNOPQRSTUVWX'
+    if code[-2:-1] in call_month_symbol:
+        # 取第三檔掛單價格，是為了避免夜盤時價差太大可能造成的風險
+        globals.third_best_call_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
+        globals.third_best_call_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
+    elif code[-2:-1] in put_month_symbol:
+        globals.third_best_put_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
+        globals.third_best_put_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
+    # print("call price: ", globals.third_best_call_buy_price, "put price: ", globals.third_best_put_buy_price)
+        
 
 # %%
 def get_trade(cp):
@@ -62,11 +82,11 @@ def get_trade(cp):
     if cp == 'C':
         contract = globals.cover_call_contract
         optionright = sj.constant.OptionRight.Call
-        price = globals.third_best_buy_price
+        price = globals.third_best_call_buy_price
     elif cp == 'P':
         contract = globals.cover_put_contract
         optionright = sj.constant.OptionRight.Put
-        price = globals.third_best_buy_price
+        price = globals.third_best_put_buy_price
     else:
         return None
     order = globals.api.Order(
@@ -74,7 +94,7 @@ def get_trade(cp):
         price=price,
         quantity=globals.cover_quantity, #口數
         price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
-        order_type=sj.constant.FuturesOrderType.ROD,
+        order_type=sj.constant.FuturesOrderType.IOC, # 立即成交否則取消
         octype=sj.constant.FuturesOCType.Cover, #倉別，收盤時平倉
         OptionRight=optionright, #選擇權類型
         account=globals.api.futopt_account #下單帳戶指定期貨帳戶
@@ -90,7 +110,7 @@ def get_trade(cp):
     return trade, price
 
 # %%
-def dynamic_price_adjustment(call_trade, call_price, put_trade, put_price):
+def dynamic_price_adjustment():
     """
     實單平倉之買進價格為動態調整 每隔15秒會偵測一次最新買價 永遠掛在最佳買價上
     
@@ -101,34 +121,34 @@ def dynamic_price_adjustment(call_trade, call_price, put_trade, put_price):
 
     return: none
     """
-    while(True):
-        if call_price != globals.third_best_buy_price:
-            call_price = globals.third_best_buy_price
-            globals.api.update_status(globals.api.futopt_account)
-            globals.api.update_order(trade=call_trade, price=call_price)
-            globals.api.update_status(globals.api.futopt_account)
-            print(call_trade.status.status.value)
+    call_price = put_price = 0
+    while(True): 
+        if call_price != globals.third_best_call_buy_price and globals.third_best_call_buy_price != None:
+            call_trade, call_price = get_trade('C')
 
-            print('***')
+            
             log_msg = f'An cover call order price is already update to {call_price}!\n'
             print(log_msg)
             message_log.write_log(log_msg)
-            print('***')
+            
+        if put_price != globals.third_best_put_buy_price and globals.third_best_put_buy_price != None:
+            put_trade, put_price = get_trade('P')
 
-        if put_price != globals.third_best_buy_price:
-            put_price = globals.third_best_buy_price
-            globals.api.update_status(globals.api.futopt_account)
-            globals.api.update_order(trade=put_trade, price=put_price)
-            globals.api.update_status(globals.api.futopt_account)
-            print(put_trade.status.status.value)
-
-            print('***')
             log_msg = f'An cover put order price is already update to {put_price}!\n'
             print(log_msg)
             message_log.write_log(log_msg)
+            
+        positions = globals.api.get_account_openposition(account=globals.api.futopt_account)
+        df_positions = pd.DataFrame(positions.data())
+        if df_positions.empty:
             print('***')
-
-        time.sleep(15)
+            log_msg = f'No more open position in account now!\n'
+            print(log_msg)
+            message_log.write_log(log_msg)
+            print('***\n')
+            break
+            
+        time.sleep(30)
 
 # %%
 def place_simulate_cover_order(quantity, option_code, cp, action):
@@ -163,12 +183,12 @@ def place_simulate_cover_order(quantity, option_code, cp, action):
             quantity,
             action,
             code= option_code,
-            delivery_month= globals.contract['delivery_month'],
+            delivery_month= "Test",
             optionright= optionright, 
             stat= sj.constant.OrderState.FDeal,
             security_type= 'OPT'
     )
-
+    
 def cover_controller():
     """
     若cover_mode成立則執行實單平倉:
@@ -188,23 +208,27 @@ def cover_controller():
     # Offset.CLOSE: A closing offset (CO) order is a limit order that is executed at market close but can be placed anytime during the trading day. 
     if globals.cover_mode:
         ### 下實單平倉 ###
-        call_trade, call_price = get_trade('C')
-        put_trade, put_price = get_trade('P')
+        
+        #call_trade, call_price = get_trade('C')
+        #print(call_trade, "price: ", call_price)
+        #put_trade, put_price = get_trade('P')
 
-        dynamic_price_adjustment(call_trade, call_price, put_trade, put_price)
+        dynamic_price_adjustment()
+        
     if globals.simulation_mode:
         ### 下模擬單平倉 ###
-        for p in globals.positions:
-            if(p[0] == 1):
-                cover_action = sj.constant.Action.Sell
-            elif(p[0] == -1):
-                cover_action = sj.constant.Action.Buy
+        while(globals.positions):
+            for p in globals.positions:
+                if(p[0] == 1):
+                    cover_action = sj.constant.Action.Sell
+                elif(p[0] == -1):
+                    cover_action = sj.constant.Action.Buy
 
-            if(p[3] == 1):
-                cp = 'C'
-            elif(p[3] == -1):
-                cp = 'P'
-            place_simulate_cover_order(p[1], p[4], cp, cover_action) #p[1]: 口數， p[3]: optionright, p[4]: option_code
+                if(p[3] == 1):
+                    cp = 'C'
+                elif(p[3] == -1):
+                    cp = 'P'
+                place_simulate_cover_order(p[1], p[4], cp, cover_action) #p[1]: 口數， p[3]: optionright, p[4]: option_code       
 
     time.sleep(1)
 
@@ -228,14 +252,13 @@ def subscribe_cover_code(cover_call_code, cover_put_code):
         version = sj.constant.QuoteVersion.v1, # or 'v1'
     )
 
-    """
+    
     globals.cover_put_contract = contract.fill_contract(cover_put_code)
     globals.api.quote.subscribe(
         globals.cover_put_contract,
         quote_type = sj.constant.QuoteType.BidAsk, # or 'bidask'
         version = sj.constant.QuoteVersion.v1, # or 'v1'
     )
-    """
 
     @globals.api.on_bidask_fop_v1()
     def quote_callback(exchange:sj.Exchange, bidask:BidAskFOPv1):
@@ -244,9 +267,4 @@ def subscribe_cover_code(cover_call_code, cover_put_code):
         Quoting subscribe function. It is called every tick(theoretically)
         """
         #print("ask_price: ", bidask['ask_price'], "bid_price: ", bidask['bid_price'])
-
-        # 取第三檔掛單價格，是為了避免夜盤時價差太大可能造成的風險
-        globals.third_best_buy_price = bidask['ask_price'][2] # 第三檔之最佳買價
-        globals.third_best_sell_price = bidask['bid_price'][2] # 第三檔之最佳賣價
-
-        time.sleep(5)
+        judge_symbol(bidask['code'], bidask)
