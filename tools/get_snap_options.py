@@ -1,8 +1,6 @@
 # %%
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import importlib
-import time
 import datetime
 
 import tools.globals as globals
@@ -111,7 +109,7 @@ def get_tse_bound(upper,bottom,txname):
 # %%
 def get_snap_options():
     """
-    Get all snap options.
+    Get 當時所有options的snapshot資訊.
     並assign到相應之global變數
     
     :global param: lastcontractprice
@@ -168,3 +166,20 @@ def get_at_the_money_info():
         if strike_money < globals.at_the_money:
             globals.at_the_money_code = keys
             globals.at_the_money = strike_money
+
+
+# %%
+def update_at_the_money_price(cp, askbid):
+    """
+    此func是為了更新globals.txo_weekly_dict
+    
+    :param: cp (str)
+    :param: askbid (str)
+    :global param: txo_weekly_dict
+    :global param: at_the_money_code
+
+    return: none
+    """
+    get_snap_options() 
+    price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
+    return price

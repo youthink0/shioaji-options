@@ -1,0 +1,86 @@
+# Shioaji-Option使用說明
+
+## 環境需求:
+* Python 3.6-3.8
+* Shioaji
+* virtualenv
+
+## 環境設置:
+
+將run.bat裡的第一行改成使用者自身的路徑
+在account資料夾裡新增account_info.json，參考同資料夾下之json.example
+
+## 程式設置:
+
+在config.json中設置模擬單(帶有simulation字樣)之參數以及實單(帶有cover字樣)之參數。
+
+get_simulation_time: 模擬單欲下單時間 (ex: "10:00:00")。
+simulation_mode: 布林值，若為True則指示程式目前為模擬環境，只能模擬下單與平倉約；如果為False，則不會有任何模擬動作。
+simulation_optionright: 模擬選擇權之買權或賣權(ex: "C" or "P")。
+simulation_quantity: 模擬選擇權之下單口數 (ex: 1)。
+simulation_action: 模擬選擇權之買或賣 (ex: "Buy" or "Sell")。
+
+如果到了get_simulation_time這個時間點，程式將會自動依照上面設定之參數下立即成交在最佳買賣五檔點位之模擬單。
+
+
+get_cover_time: 欲平倉時間 (ex: "05:00:00") *** 為求精簡，此平倉為模擬單與實單共用，也就是平倉時間皆會以此參數為準 ***。
+cover_mode: 布林值，若為True則指示程式目前為實單環境，只能實單平倉；如果為False，則不會有任何實單動作。
+cover_put_strike: 實單之put履約價 (ex: 15000)。
+cover_call_strike: 實單之call履約價(ex: "15000)。
+cover_quantity: 實單平倉口數 (ex: 1) *** 實單之call、put共用 ***。
+
+如果到了get_cover_time這個時間點，程式將會自動依照simulation_mode以及cover_mode的設定，決定誰要執行平倉。
+- 若simulation_mode為True，則將現有的所有模擬倉位全部平倉。
+- 若cover_mode為True，則不論目前有無實單，call以及put都會依照目前的代碼下cover_quantity口數之cover單。
+
+## 使用:
+
+運行```run.bat```即可。
+
+下單之前請確認目前追蹤的商品和下單的商品是相同的。
+
+不論實單或模擬單 皆沒有考慮禮拜三下單狀況(避免結算日)。
+
+實單平倉會不斷下Cover單，若想停止請直接關閉程式
+
+config.json裡 只能有一方是true 當有true則有另一方一定要false 這樣訊息才不會太混亂。
+
+若出現類似"A cover time been detected. time: 18:27:30"的訊息時，代表時間已來到全部強制平倉的時間。
+
+使用list指令會列出每個目前正在追蹤的部位，每個部位由六個部分組成：
+買進或賣出，口數(quantity)，成交價(deal price)，買權或賣權，價平之代碼以及cover order had been sent。
+Cover order had been sent如果為True，代表該部位因為某些原因已經由程式送出平倉單，但因為另外的原因平倉單沒有成交（可能是因為憑證認證失敗導致交易失敗或者是網路問題等）。如果出現該種情況代表是不正常的，程式將不會繼續追蹤該部位。請結束程式，並處理好問題之後再重新開啟。
+
+當出現類似"A position with code=TX214650X2, type=Sell Put, quantity=5, price=123 has been added to the track list!"的訊息時，才代表這個部位正在被追蹤。
+
+當出現類似"A loss stop has been detected. Strike code: {'TX214600X2'}, Market price: {140}, buy price: {100}\n"的訊息時，代表這個部位觸發停損。
+另外當出現類似"A position with [-1, 5, 106, -1, 'TX214600X2', False] has been covered!"的訊息時，才代表這個部位已經被平倉。
+
+
+## 程式平倉邏輯：
+
+實單方面口數是CALL PUT共用。
+
+實單方面的平倉，只有考慮*** 平倉買進 ***，因此沒有設ACTION參數。
+
+
+此程式只會處理周選擇權，也就是只能處理上禮拜四到這禮拜三間下的周選單。
+此程式設定只能平倉舊單，也就是不能在禮拜三當天下了下禮拜的周選新單。
+
+實單考慮到夜盤價差過大，因此掛單會掛在最佳買價第三檔。
+
+採用最佳買價移動掛單邏輯，因此永遠會掛在最佳買價第三檔，*** 當目前沒有任何部位就會停止掛單 ***。
+例如現在最佳買價是105（還沒掛單），就掛在107，再次偵測後最佳買如果還是107就不往上移，如果別人掛了107，就改成109。
+
+
+模擬單會自動記憶目前擁有之模擬倉位，因此若程式突然中斷，下次開啟時仍會有上次模擬倉位的紀錄。
+
+
+模擬單另外設有停損功能，按照目前倉位是買或賣，如果成交價以損失原成交價的1.4倍以上，則強制平倉。
+
+## 憑證:
+
+遇到"憑證驗章失敗,請至3310憑證管理畫面憑證查詢狀態"
+https://www.sinotrade.com.tw/CSCenter/CSCenter_13_3
+註銷原本的憑證，重新申請一個新的，然後將新的憑證放進account/
+如果沒有原本的憑證，沒辦法直接申請新的，這應該是永豐金證券憑證管理的bug。

@@ -32,5 +32,5 @@ def write_log(text):
     # In order to let json dumps chinese correctly, codecs is needed.
     # When ever use json dumps, specify ensure_ascii=False
     fp = codecs.open(path, 'a+', 'utf8')
-    fp.write(now.strftime('%Y%m%d') + ":" + text)
+    fp.write(now.strftime('%Y%m%d') + " " + now.strftime('%H') + ":" + now.strftime('%M') + ":" + now.strftime('%S') + "    : " + text)
     fp.close()
