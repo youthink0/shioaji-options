@@ -5,6 +5,7 @@
 * Python 3.6-3.8
 * Shioaji
 * virtualenv
+  * https://hackmd.io/ouzfodBiR7asRZspTXdq2Q
 
 ## operation explaination
 - Please read 自動下單及平倉整合說明.txt before started.
