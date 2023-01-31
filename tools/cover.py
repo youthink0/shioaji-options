@@ -69,7 +69,7 @@ def judge_symbol(code, bidask):
 # %%
 def get_trade(cp):
     """
-    得到json檔中call put各自的trade資訊
+    得到json檔中call put各自的trade資訊 每次只平倉一口
     
     :param: cp (str)
     :global param: api
@@ -92,7 +92,8 @@ def get_trade(cp):
     order = globals.api.Order(
         action=sj.constant.Action.Buy,
         price=price,
-        quantity=globals.cover_quantity, #口數
+        # quantity=globals.cover_quantity, #口數
+        quantity=1, #口數
         price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
         order_type=sj.constant.FuturesOrderType.IOC, # 立即成交否則取消
         octype=sj.constant.FuturesOCType.Cover, #倉別，收盤時平倉
@@ -112,12 +113,13 @@ def get_trade(cp):
 # %%
 def dynamic_price_adjustment():
     """
-    實單平倉之買進價格為動態調整 每隔15秒會偵測一次最新買價 永遠掛在最佳買價上
+    實單平倉之買進價格為動態調整 每隔json指定之間隔秒數會偵測一次最新買價並送出平倉單 永遠掛在最佳買價上
     
     :param: trade (<class 'shioaji.order.Trade'>)
     :param: price (int)
     :global param: api
     :global param: third_best_buy_price
+    :global param: cover_gap_time
 
     return: none
     """
@@ -148,7 +150,7 @@ def dynamic_price_adjustment():
             print('***\n')
             break
             
-        time.sleep(30)
+        time.sleep(globals.cover_gap_time)
 
 # %%
 def place_simulate_cover_order(quantity, option_code, cp, action):

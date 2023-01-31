@@ -5,9 +5,10 @@
     "simulation_quantity": 5,
     "simulation_action": "Sell",
 
-    "get_cover_time": "00:53:30",
+    "get_cover_time": "17:54:30",
     "cover_mode": "true",
-    "cover_put_strike": 14600,
-    "cover_call_strike": 14600,
-    "cover_quantity": 1
+    "cover_put_strike": 15200,
+    "cover_call_strike": 15200,
+    "cover_quantity": 3,
+    "cover_gap_time": 20
 }

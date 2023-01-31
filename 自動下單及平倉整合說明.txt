@@ -28,6 +28,7 @@ cover_mode: 布林值，若為True則指示程式目前為實單環境，只能�
 cover_put_strike: 實單之put履約價 (ex: 15000)。
 cover_call_strike: 實單之call履約價(ex: "15000)。
 cover_quantity: 實單平倉口數 (ex: 1) *** 實單之call、put共用 ***。
+cover_gap_time: 實單平倉間隔秒數(ex: 20) *** 實單之call、put共用 ***。
 
 如果到了get_cover_time這個時間點，程式將會自動依照simulation_mode以及cover_mode的設定，決定誰要執行平倉。
 - 若simulation_mode為True，則將現有的所有模擬倉位全部平倉。
@@ -60,6 +61,8 @@ Cover order had been sent如果為True，代表該部位因為某些原因已經
 ## 程式平倉邏輯：
 
 實單方面口數是CALL PUT共用。
+
+每次平倉只會下一口，下一次下單間隔根據cover_gap_time之數字(秒數)來決定，下到手上無倉位為止。
 
 實單方面的平倉，只有考慮*** 平倉買進 ***，因此沒有設ACTION參數。
 

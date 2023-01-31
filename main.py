@@ -51,6 +51,7 @@ def update_config():
     pre_cover_put_strike = None 
     pre_cover_call_strike = None 
     pre_cover_quantity = None
+    pre_cover_gap_time = None
 
     while(True):
 
@@ -87,6 +88,7 @@ def update_config():
             globals.cover_put_strike = config_data['cover_put_strike']
             globals.cover_call_strike = config_data['cover_call_strike']
             globals.cover_quantity = config_data['cover_quantity']
+            globals.cover_gap_time = config_data['cover_gap_time']
 
             ### detect ###
             if(pre_get_simulation_time != globals.get_simulation_time):
@@ -128,6 +130,10 @@ def update_config():
             if(pre_cover_quantity != globals.cover_quantity):
                 print(f'Cover quantity has been set to {globals.cover_quantity}')
                 pre_cover_quantity = globals.cover_quantity
+
+            if(pre_cover_gap_time != globals.cover_gap_time):
+                print(f'Cover gap time has been set to {globals.cover_gap_time}')
+                pre_cover_gap_time = globals.cover_gap_time
 
             time.sleep(1)
 
