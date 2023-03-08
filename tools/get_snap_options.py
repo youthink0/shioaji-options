@@ -183,3 +183,5 @@ def update_at_the_money_price(cp, askbid):
     get_snap_options() 
     price = globals.txo_weekly_dict[globals.at_the_money_code][cp].get(askbid)
     return price
+
+# %%

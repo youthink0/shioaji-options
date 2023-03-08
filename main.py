@@ -53,6 +53,8 @@ def update_config():
     pre_cover_quantity = None
     pre_cover_gap_time = None
 
+    pre_sell_call_quantity = None
+
     while(True):
 
         with open('config.json') as f:
@@ -89,6 +91,7 @@ def update_config():
             globals.cover_call_strike = config_data['cover_call_strike']
             globals.cover_quantity = config_data['cover_quantity']
             globals.cover_gap_time = config_data['cover_gap_time']
+            globals.sell_call_quantity = config_data['sell_call_quantity']
 
             ### detect ###
             if(pre_get_simulation_time != globals.get_simulation_time):
@@ -134,6 +137,10 @@ def update_config():
             if(pre_cover_gap_time != globals.cover_gap_time):
                 print(f'Cover gap time has been set to {globals.cover_gap_time}')
                 pre_cover_gap_time = globals.cover_gap_time
+
+            if(pre_sell_call_quantity != globals.sell_call_quantity):
+                print(f'Sell call quantity has been set to {globals.sell_call_quantity}')
+                pre_sell_call_quantity = globals.sell_call_quantity
 
             time.sleep(1)
 
@@ -231,6 +238,55 @@ def load_position():
         print("None")
 
 # %%
+def limit_order():
+    """
+    每日開盤前，掛最接近台灣指數收盤的履約價N口sell call漲停價，N由globals.sell_call_quatity決定
+
+    漲停價說明: 假設昨日收盤15000，則今天掛sell call 15000 價格在15000*10% = 1500上
+
+    :global param: sell_call_quantity
+    :global param: api
+    :return:  None
+    """
+
+    cover_day = datetime.datetime.today()
+    contractname = snap.get_opt_txnum(cover_day)
+
+    contract_snap = globals.api.snapshots([globals.api.Contracts.Indexs.TSE.TSE001])[0]
+    close=contract_snap.close # get TSE001's current market price 
+
+    # Get proper close strike price
+    close_div = int(close / 100) * 100
+    close_mod = close % 100
+    if close_mod >= 0 and close_mod < 25:
+        close = close_div
+    elif close_mod >= 25 and close_mod <75:
+        close = close_div + 50
+    else:
+        close = close_div + 100
+
+    cover_call_code = contractname + str(close) + snap.get_option_code("C")
+
+    daily_limit_contract = contract.fill_contract(cover_call_code)
+    order = globals.api.Order(
+            action=sj.constant.Action.Sell,
+            price=close * 0.1, # strike_price * 10%
+            quantity=globals.sell_call_quantity, # 根據config.json的口數
+            price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
+            order_type=sj.constant.FuturesOrderType.ROD, # 當日有效
+            octype=sj.constant.FuturesOCType.Auto, #倉別，設定成自動
+            OptionRight=sj.constant.OptionRight.Call, #選擇權類型
+            account=globals.api.futopt_account #下單帳戶指定期貨帳戶
+        )
+
+    trade = globals.api.place_order(daily_limit_contract, order)
+    print('***')
+    log_msg = f'A daily limit order {trade} is already sent!\n'
+    print(log_msg)
+    message_log.write_log(log_msg)
+    print('***\n')
+
+# %%
 def main():
     """
     Controlled whole program, make app execute.
@@ -272,6 +328,9 @@ def main():
     price_checker_thread = threading.Thread(target = price_checker)
     price_checker_thread.start()
     
+    ### 在開盤前預掛前日最接近台灣指數(TSE)收盤價之Sell call漲停單
+    limit_order()
+
     ### 訂閱平倉檔次之bidask ###
     cover_call_code, cover_put_code = cover.get_cover_code()
     print("put: ", cover_put_code, "call: ", cover_call_code)
@@ -287,7 +346,14 @@ if __name__ == "__main__":
 
 # %%
 globals.txo_weekly_dict[globals.at_the_money_code][globals.simulation_optionright]
-globals.positions
+
+# %%
+cover_day = datetime.datetime.today()
+contractname = snap.get_opt_txnum(cover_day)
+
+contract_snap = globals.api.snapshots([globals.api.Contracts.Indexs.TSE.TSE001])[0]
+close=contract_snap.close # get TSE001's current market price 
+close
 
 # %%
 # 目前實現進度: 

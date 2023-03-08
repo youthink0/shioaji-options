@@ -34,6 +34,9 @@ cover_gap_time: 實單平倉間隔秒數(ex: 20) *** 實單之call、put共用 *
 - 若simulation_mode為True，則將現有的所有模擬倉位全部平倉。
 - 若cover_mode為True，則不論目前有無實單，call以及put都會依照目前的代碼下cover_quantity口數之cover單。
 
+
+sell_call_quantity: 開盤時預掛之漲停Sell Call口數。
+
 ## 使用:
 
 運行```run.bat```即可。
@@ -80,6 +83,11 @@ Cover order had been sent如果為True，代表該部位因為某些原因已經
 
 
 模擬單另外設有停損功能，按照目前倉位是買或賣，如果成交價以損失原成交價的1.4倍以上，則強制平倉。
+
+## 程式漲停下單邏輯:
+每日開盤前，掛最接近台灣指數收盤的履約價N口sell call漲停價，N由globals.sell_call_quatity決定
+
+漲停價說明: 假設昨日收盤15000，則今天掛sell call 15000 價格在15000*10% = 1500上
 
 ## 憑證:
 

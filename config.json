@@ -10,5 +10,7 @@
     "cover_put_strike": 15200,
     "cover_call_strike": 15200,
     "cover_quantity": 3,
-    "cover_gap_time": 20
+    "cover_gap_time": 20,
+
+    "sell_call_quantity": 1
 }
