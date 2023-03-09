@@ -265,12 +265,14 @@ def limit_order():
     else:
         close = close_div + 100
 
+    price = int(close / 100) * 10 #為了讓下單價格的尾數為0，實現10點一跳
+
     cover_call_code = contractname + str(close) + snap.get_option_code("C")
 
     daily_limit_contract = contract.fill_contract(cover_call_code)
     order = globals.api.Order(
             action=sj.constant.Action.Sell,
-            price=close * 0.1, # strike_price * 10%
+            price=price, # strike_price * 10%, and let price be 10 point as one jump
             quantity=globals.sell_call_quantity, # 根據config.json的口數
             price_type=sj.constant.StockPriceType.LMT, #MKT: 市價 LMT: 限價
             order_type=sj.constant.FuturesOrderType.ROD, # 當日有效
