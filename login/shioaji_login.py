@@ -22,6 +22,10 @@ def login():
     #ca_path = os.path.abspath(ca_path)
 
     api = sj.Shioaji() 
+    # api_login = api.login(
+    #     api_key="8iS351Teaj7bJk9RFJZdeLbg7h9fPAzPSYzA8z9tT1Yg",     # 請修改此處
+    #     secret_key="9FBDD72PypmrsxpUJzBTVtFyiVyb2et7XE2sWzmfL2RH"
+    # )
     
     api_login = api.login(
         person_id = account_data['person_id'],

@@ -8,13 +8,16 @@ def initialize():
     global simulation_mode, simulation_optionright, simulation_quantity, simulation_action #模擬單資訊
     global get_cover_time #強制平倉的時間
     global cover_mode, cover_put_strike, cover_call_strike, cover_quantity, cover_gap_time #實單平倉資訊
-    global sell_call_quantity #開盤下漲停價之口數
+    global sell_call_quantity #開盤下平盤漲停價之口數
+    global buy_call_quantity #開盤下跌停價之口數
+    global buy_call_price #開盤下跌停價之成交點數
 
     get_simulation_time = None
     simulation_mode = simulation_optionright = simulation_quantity = simulation_action = None
     get_cover_time = None
     cover_mode = cover_put_strike = cover_call_strike = cover_quantity = cover_gap_time = None
-    sell_call_quantity = None
+    sell_call_quantity = buy_call_quantity =  None
+    buy_call_price = None
 
     ### interior setting ###
     global api

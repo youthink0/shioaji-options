@@ -12,5 +12,7 @@
     "cover_quantity": 3,
     "cover_gap_time": 20,
 
-    "sell_call_quantity": 1
+    "sell_call_quantity": 1,
+    "buy_call_quantity": 1,
+    "buy_call_price":0.1
 }
