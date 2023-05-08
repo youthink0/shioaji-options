@@ -394,6 +394,7 @@ def main():
     
     ### 在開盤前預掛前日最接近台灣指數(TSE)收盤價之Sell call漲停單
     limit_sell_call_order()
+    time.sleep(1)
     limit_buy_call_order()
 
     ### 訂閱平倉檔次之bidask ###
