@@ -322,10 +322,8 @@ def limit_buy_call_order():
     # Get proper close strike price
     close_div = int(close / 100) * 100
     close_mod = close % 100
-    if close_mod >= 0 and close_mod < 25:
+    if close_mod >= 0 and close_mod < 50:
         close = close_div
-    elif close_mod >= 25 and close_mod <75:
-        close = close_div + 50
     else:
         close = close_div + 100
 
