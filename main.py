@@ -323,9 +323,9 @@ def limit_buy_call_order():
     close_div = int(close / 100) * 100
     close_mod = close % 100
     if close_mod >= 0 and close_mod < 50:
-        close = close_div
+        close = close_div + 200
     else:
-        close = close_div + 100
+        close = close_div + 300
 
     cover_call_code = contractname + str(close) + snap.get_option_code("C")
 
