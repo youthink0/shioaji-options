@@ -36,6 +36,8 @@ cover_gap_time: 實單平倉間隔秒數(ex: 20) *** 實單之call、put共用 *
 
 
 sell_call_quantity: 開盤時預掛之漲停Sell Call口數。
+buy_call_quantity: 開盤時預掛之跌停Buy Call口數。
+buy_call_price: 開盤時預掛之跌停Buy Call的價格。
 
 ## 使用:
 
@@ -98,6 +100,8 @@ Cover order had been sent如果為True，代表該部位因為某些原因已經
 
 跌停價說明1: 假設昨日收盤15000，則今天掛buy call 15000 - 1500 = 13500 
 跌停價說明2: 假設昨日收盤16668，則今天掛buy call 16650 - 1665 = 14985，取整變15000
+跌停價說明3: 由於離價內太遠，要注意選擇權會100點一跳
+
 
 ## 憑證:
 
